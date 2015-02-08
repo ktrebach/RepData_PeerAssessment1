@@ -1,32 +1,6 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-author:  ktrebach
-output: 
-  html_document:
-    keep_md: true
----
-```{r Initialize, echo=FALSE, results="hide",message=FALSE}
+# Reproducible Research: Peer Assessment 1
+ktrebach  
 
-## Load the R packages that we will neeed to process and analyze the data
-suppressWarnings(library(knitr))
-
-library(markdown)
-
-suppressWarnings(library(dplyr))
-
-library(lattice)
-
-library(lubridate)
-
-library(xtable)
-
-## Function to format as percent
-printpct<-function(x){
-      y<-round(x*100,2)
-      paste(y,"%",sep="")
-}
-
-```
 ## Loading and preprocessing the data
 
 Read the Activity monitoring dataset which is assumed to be in the working 
@@ -39,8 +13,8 @@ The data consists of three variables:
 There are 17,568 observations which correspond to the number of *steps* taken in
 each of the five minute *intervals* from the 61 *days between 10/1/2012 and 11/30/2012*.
 
-```{r LoadData}
 
+```r
 ## Unzip if necesary, read table into R
 if(!file.exists("activity.csv")) {unzip("activity.zip")}
 
@@ -52,24 +26,22 @@ NAcount<-format(sum(is.na(stepData)), big.mark = ",")
 IncompleteCases <- sum(!complete.cases(stepData))
 
 PctIC<-IncompleteCases/nrow(stepData)
-
 ```
 
-After some preliminary viewing of the data, it is determined that `r NAcount` of the step
+After some preliminary viewing of the data, it is determined that 2,304 of the step
 observations are NA.  
 
 Completion of the data analysis assignment requires a conversion
 of the date variable into a POSIXlt date variable.
 
-```{r convertdate}
 
+```r
 ## Convert dates to POSIXlt
 dateN <- as.POSIXlt(stepData$date)
 
 stepData <- cbind(stepData, dateN)
 
 stepData <- select(stepData, dateN, interval, steps)
-
 ```
 
 ## What is mean total number of steps taken per day?
@@ -77,8 +49,8 @@ stepData <- select(stepData, dateN, interval, steps)
 To calculate the mean of the total number of steps taken each day, we first create 
 a dataframe of total number of steps taken per day and then take the mean of that total.  
 
-```{r meansteps}
 
+```r
 ## Aggregate the number of steps by day
 meanstepsbyday <- aggregate(stepData[,3], by = list(dateN = as.factor(stepData$dateN)), 
                             FUN = sum)
@@ -92,7 +64,9 @@ mediansteps <- format(round(median(meanstepsbyday$x, na.rm = TRUE),0), big.mark 
 hist(meanstepsbyday$x, main="Histogram of Total Steps Taken per Day", xlab = "Number of Steps per Day")
 ```
 
-The mean of the total number of steps taken per day is `r meansteps` and the median is `r mediansteps`.  
+![](PA1_template_files/figure-html/meansteps-1.png) 
+
+The mean of the total number of steps taken per day is 10,766 and the median is 10,765.  
 
 ## What is the average daily activity pattern?
 
@@ -100,8 +74,8 @@ Here we are trying to find the average number of steps taken during each of the 
 minute intervals across the observation dates. We create a dataframe of average number
 of steps taken by the 5 minute interval.
 
-```{r byinterval}
 
+```r
 ## Make interval a factor
 stepData$interval <- as.factor(stepData$interval)
 
@@ -116,18 +90,17 @@ rownumb<-which(byinterval$x == max(byinterval$x))
 maxinterval <- as.numeric(as.character(byinterval$interval[rownumb]))
 
 ## Create the plot
-xyplot(x ~ as.numeric(as.character(interval)), data = byinterval, type="l", 
-       ylab = "Average Number of Steps", 
+xyplot(x ~ as.numeric(as.character(interval)), data = byinterval, type="l", ylab = "Average Number of Steps", 
        xlab = "Interval", main = "Average Daily Activity Pattern", 
        sub = "Number of Steps by 5-Minute Interval", 
        scales = list(x = list(tick.number = 12)))
-
-
 ```
 
-On average across all the days in the dataset, the `r maxinterval` 5-minute interval
+![](PA1_template_files/figure-html/byinterval-1.png) 
+
+On average across all the days in the dataset, the 835 5-minute interval
 contains the maximum number of steps. The maximum number of steps during the
-`r maxinterval` interval is `r maxsteps`.
+835 interval is 206.
 
 ## Imputing missing values
 
@@ -136,15 +109,15 @@ Given that there are a number of days/intervals where there are missing values
 calculations or summaries of the data.
 
 In fact, the total number of rows with missing values in the data set is 
-`r format(IncompleteCases, big.mark = ",")`, or `r printpct(PctIC)` of the observations.
+2,304, or 13.11% of the observations.
 
 
 In order to evaluate the impact of missing data, a new dataset will be created
 that fills in the missing step values for a given interval in the dataset with 
 the mean for its 5-minute interval.
 
-``` {r fillinmissing}
 
+```r
 ## Split the dataframe into complete cases and incomplete cases:
 stepCompleteT <- stepData[complete.cases(stepData),]  
 
@@ -157,15 +130,14 @@ stepCompleteN <- select(stepCompleteN, dateN, interval, steps = x)
 
 ## Bind the two dataframes together to get a complete data set without any missing data
 stepComplete <- arrange(rbind(stepCompleteT,stepCompleteN), dateN, interval)
-
 ```
 
 We will now evaluate the new dataset to determine the mean and median total number 
 of steps taken per day and compare how these values differ from the estimates from
 the first part of the assignment.
 
-``` {r meanstepsComplete}
 
+```r
 ## Aggregate the number of steps by day
 meanstepsCbyday <- aggregate(stepComplete[,3], by = list(dateN = as.factor(stepComplete$dateN)), 
                             FUN = sum)
@@ -180,19 +152,27 @@ comptable <- xtable(matrix(c(meansteps, meanstepsC, mediansteps, medianstepsC), 
 ## Plot the histogram
 hist(meanstepsCbyday$x, main="Histogram of Total Steps w/Assumption for Missing Data",
      xlab = "Number of Steps per Day")
-
 ```
+
+![](PA1_template_files/figure-html/meanstepsComplete-1.png) 
 
 As shown in the the table below, the mean and median for the modified dataset (NA 
 values replaced with the average for respective interval) and the original dataset
 (NA values ignored) are nearly identical.  
 
 
-```{r printtable,results = 'asis'}
 
+```r
 print(comptable, type = "html")
-
 ```
+
+<!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
+<!-- Sat Feb  7 23:41:16 2015 -->
+<table border=1>
+<tr> <th>  </th> <th>   Original   </th> <th>   Modified   </th>  </tr>
+  <tr> <td align="right">   Mean   </td> <td> 10,766 </td> <td> 10,766 </td> </tr>
+  <tr> <td align="right">   Median   </td> <td> 10,765 </td> <td> 10,766 </td> </tr>
+   </table>
 
 
   
@@ -208,8 +188,8 @@ exactly eight values from each interval are missing.
 We will now compare the average daily activity pattern for weekdays and weekend days.
 
 
-```{r createDaynamefactor}
 
+```r
 ## Create a factor variable to identify weekend or weekday and bind it to the dataframe.
 Dayname <- weekdays(stepComplete$dateN)
 
@@ -224,14 +204,12 @@ for(i in 1:length(Dayname)) {
 Dayname <- factor(Dayname)
 
 stepComplete <- cbind(stepComplete, Dayname)
-
 ```
 
 
 
-```{r createpanelplot}
 
-
+```r
 ## Average the number of steps by weekend/weekday and by interval
 byintervalDN <- aggregate(stepComplete[,3], by = list(interval = stepComplete$interval, 
                         Dayname = stepComplete$Dayname), 
@@ -243,9 +221,9 @@ xyplot(x ~ as.numeric(as.character(interval))|Dayname, layout = c(1,2), data = b
        xlab = "Interval", main = "Average Daily Activity Pattern", 
        sub = "Number of Steps by 5-Minute Interval", 
        scales = list(x = list(tick.number = 12)))
-
-
 ```
+
+![](PA1_template_files/figure-html/createpanelplot-1.png) 
 
   
 
