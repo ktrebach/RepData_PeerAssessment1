@@ -47,15 +47,17 @@ stepData <- select(stepData, dateN, interval, steps)
 ## What is mean total number of steps taken per day?
 
 To calculate the mean of the total number of steps taken each day, we first create 
-a dataframe of total number of steps taken per day and then take the mean of that total.  
+a dataframe of total number of steps taken per day and then take the mean of that 
+total. It is noted that any day that has one or more intervals with NA steps will 
+not be considered in the histogram, mean or median.  
 
 
 ```r
-## Aggregate the number of steps by day
+## Aggregate the number of steps by day. Only days without any NA steps will be aggregated.
 meanstepsbyday <- aggregate(stepData[,3], by = list(dateN = as.factor(stepData$dateN)), 
                             FUN = sum)
 
-## Find the mean and the median
+## Find the mean and the median. 
 meansteps <- format(round(mean(meanstepsbyday$x, na.rm = TRUE),0), big.mark = ",")
 
 mediansteps <- format(round(median(meanstepsbyday$x, na.rm = TRUE),0), big.mark = ",")
@@ -90,7 +92,8 @@ rownumb<-which(byinterval$x == max(byinterval$x))
 maxinterval <- as.numeric(as.character(byinterval$interval[rownumb]))
 
 ## Create the plot
-xyplot(x ~ as.numeric(as.character(interval)), data = byinterval, type="l", ylab = "Average Number of Steps", 
+xyplot(x ~ as.numeric(as.character(interval)), data = byinterval, type="l", 
+       ylab = "Average Number of Steps", 
        xlab = "Interval", main = "Average Daily Activity Pattern", 
        sub = "Number of Steps by 5-Minute Interval", 
        scales = list(x = list(tick.number = 12)))
@@ -146,7 +149,7 @@ meanstepsC <- format(round(mean(meanstepsCbyday$x, na.rm = TRUE),0), big.mark = 
 
 medianstepsC <- format(round(median(meanstepsCbyday$x, na.rm = TRUE),0), big.mark = ",")
 
-comptable <- xtable(matrix(c(meansteps, meanstepsC, mediansteps, medianstepsC), byrow = TRUE, 2, 2, 
+compTable <- xtable(matrix(c(meansteps, meanstepsC, mediansteps, medianstepsC), byrow = TRUE, 2, 2, 
                     dimnames = list(c("  Mean  ","  Median  "),c("  Original  ","  Modified  "))))
 
 ## Plot the histogram
@@ -156,18 +159,19 @@ hist(meanstepsCbyday$x, main="Histogram of Total Steps w/Assumption for Missing 
 
 ![](PA1_template_files/figure-html/meanstepsComplete-1.png) 
 
-As shown in the the table below, the mean and median for the modified dataset (NA 
-values replaced with the average for respective interval) and the original dataset
-(NA values ignored) are nearly identical.  
+The mean and median for the modified dataset -- for which all NA values are replaced 
+with the average for respective interval -- are shown in the the table below.  The 
+mean and median for the original dataset -- for which all NA values are ignored and 
+thus any days with NA for any interval are also ignored -- are also shown in the table.  
 
 
 
 ```r
-print(comptable, type = "html")
+print(compTable, type = "html")
 ```
 
 <!-- html table generated in R 3.1.1 by xtable 1.7-4 package -->
-<!-- Sat Feb  7 23:41:16 2015 -->
+<!-- Sun Feb  8 15:12:28 2015 -->
 <table border=1>
 <tr> <th>  </th> <th>   Original   </th> <th>   Modified   </th>  </tr>
   <tr> <td align="right">   Mean   </td> <td> 10,766 </td> <td> 10,766 </td> </tr>
@@ -177,9 +181,10 @@ print(comptable, type = "html")
 
   
 
-There is no impact on the dataset when filling in the missing step values for a given 
-interval in the dataset with the mean for its 5-minute interval.  Why?  Because 
-exactly eight values from each interval are missing.
+While the center of the *modified* data's histogram is taller than the *original* 
+data's as it tallies more *complete* days, there is no impact on the daily mean or daily 
+median when filling in the missing step values using the interval's average in the 
+dataset.  Why?  Because exactly eight values from each interval are missing.
 
 
 
@@ -213,7 +218,7 @@ stepComplete <- cbind(stepComplete, Dayname)
 ## Average the number of steps by weekend/weekday and by interval
 byintervalDN <- aggregate(stepComplete[,3], by = list(interval = stepComplete$interval, 
                         Dayname = stepComplete$Dayname), 
-                            FUN = mean, na.rm=TRUE)
+                            FUN = mean)
 
 ## Create the panel plot.
 xyplot(x ~ as.numeric(as.character(interval))|Dayname, layout = c(1,2), data = byintervalDN, 
